@@ -6,7 +6,7 @@ users = []
 last = ["ls"]
 
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
-help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', 'show_map', 'create_rout')
+help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
 @bot.message_handler(commands=['commands', 'c'])
 def help_commands_menu(message):
     bot.send_message(message.chat.id, 'Привет, перед тобой список доступных команд:', reply_markup=help_commans_keyboard)
