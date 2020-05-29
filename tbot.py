@@ -124,9 +124,20 @@ def all_send(message):
 
 @bot.message_handler(content_types=['location'])
 def handle_location(message):
-    cords[message.from_user.id] = (message.location.latitude, message.location.longitude)
+    cords[message.from_user.id] = [message.location.latitude, message.location.longitude,message.message_id,message.from_user.id]
     print(cords)
+				
+@bot.message_handler(commands=["updateLoc"])
+def all_send(message):
+	for c in cords.values():
+		msg=bot.forward_message(users[0][0],c[3],disable_notification=True,message_id=c[2])
+		print(msg.location.latitude)
+		print(msg.location.longitude)
+		c[0]=msg.location.latitude
+		c[1]=msg.location.longitude
+		bot.delete_message(users[0][0],msg.message_id)
 		
+
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['help'])
 def send_help(message):
