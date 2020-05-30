@@ -129,12 +129,12 @@ def handle_location(message):
 				
 @bot.message_handler(commands=["updateLoc"])
 def all_send(message):
-	for c in cords.values():
-		msg=bot.forward_message(users[0][0],c[3],disable_notification=True,message_id=c[2])
+	for c in cords:
+		msg=bot.forward_message(users[0][0],cords[c][3],disable_notification=True,message_id=cords[c][2])
 		print(msg.location.latitude)
 		print(msg.location.longitude)
-		c[0]=msg.location.latitude
-		c[1]=msg.location.longitude
+		cords[c][0]=msg.location.latitude
+		cords[c][1]=msg.location.longitude
 		bot.delete_message(users[0][0],msg.message_id)
 		
 
