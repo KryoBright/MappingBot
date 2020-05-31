@@ -20,6 +20,13 @@ class perpetualTimer():
 
    def cancel(self):
       self.thread.cancel()
+      
+import meeting_point
+
+# средняя точка, формулы в соседнем файле
+sponsor = [[12,10], [3,5], [8,10]]
+users = [[80,10], [10,5], [8,30]]
+print(meeting_point.findMiddlePoint(sponsor, users))
 
 
 bot = telebot.TeleBot("1132979507:AAG92LMX_Wn-a6SrdYcA2pvadQBDvrkJULs")
@@ -35,6 +42,8 @@ i_tmp=[0]
 def get_location():
 	i_tmp[0]+=1
 	return [i_tmp[0],i_tmp[0]]
+
+cords = {}
 
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
 help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
@@ -149,6 +158,21 @@ def all_send(message):
 			text=text+str(t)
 			text=text+","
 		bot.send_message(message.from_user.id,text)
+
+@bot.message_handler(content_types=['location'])
+def handle_location(message):
+    cords[message.from_user.id] = [message.location.latitude, message.location.longitude,message.message_id,message.from_user.id]
+    print(cords)
+				
+@bot.message_handler(commands=["updateLoc"])
+def all_send(message):
+	for c in cords:
+		msg=bot.forward_message(users[0][0],cords[c][3],disable_notification=True,message_id=cords[c][2])
+		print(msg.location.latitude)
+		print(msg.location.longitude)
+		cords[c][0]=msg.location.latitude
+		cords[c][1]=msg.location.longitude
+		bot.delete_message(users[0][0],msg.message_id)
 		
 #@bot.message_handler(commands=['send_loc'])
 def update_loc():
