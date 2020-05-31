@@ -1,5 +1,12 @@
 import telebot
 import re
+import meeting_point
+
+# средняя точка, формулы в соседнем файле
+sponsor = [[12,10], [3,5], [8,10]]
+users = [[80,10], [10,5], [8,30]]
+print(meeting_point.findMiddlePoint(sponsor, users))
+
 
 bot = telebot.TeleBot("1132979507:AAG92LMX_Wn-a6SrdYcA2pvadQBDvrkJULs")
 

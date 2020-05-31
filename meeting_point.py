@@ -18,7 +18,7 @@ def OCM_buildingСheck(Midpoint):
 	response = requests.get(overpass_url, params={'data': overpass_query})
 	data = response.json()
 
-	print(len(data['elements']))
+	#print(len(data['elements']))
 
 	if(len(data['elements']) == 0):
 		return True
@@ -39,9 +39,34 @@ def toupleMean(list):
 	return [meanNumberX / len(list), meanNumberY / len(list)]
 
 
+def sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinates):
+	minUserX = 1000000000
+	minUserY = 1000000000
+	maxUserX = -1000000000
+	maxUserY = -1000000000
+
+	for user in usersCoordinates:
+		if(user[0] < minUserX):
+			minUserX = user[0]
+		if(user[0] > maxUserX):
+			maxUserX = user[0]
+		if(user[1] < minUserY):
+			minUserY = user[1]
+		if(user[1] > maxUserY):
+			maxUserY = user[1]
+
+	filterSponsorСoordinates = []
+	for sponsor in sponsorСoordinates:
+		if (sponsor[0] >= minUserX and sponsor[0] <= maxUserX and sponsor[1] >= minUserY and sponsor[1] <= maxUserY):
+			filterSponsorСoordinates.append(sponsor)
+
+	return filterSponsorСoordinates
+
 def findMiddlePoint(sponsorСoordinates, usersCoordinates):
+	sponsorСoordinates = sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinates)
+
 	sponsorsMidpoint = toupleMean(sponsorСoordinates)
-	usersMidpoint = toupleMean(usersCoordinates)	
+	usersMidpoint = toupleMean(usersCoordinates)
 
 	sponsorsWeight = 3
 	Midpoint = [
@@ -49,9 +74,9 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 		(sponsorsWeight * sponsorsMidpoint[1] + usersMidpoint[1]) / (sponsorsWeight + 1)
 	]
 
-	print(sponsorsMidpoint)
-	print(usersMidpoint)
-	print(Midpoint)
+	#print(sponsorsMidpoint)
+	#print(usersMidpoint)
+	#print(Midpoint)
 
 	isEmptyPlace = False
 	while isEmptyPlace == False:
@@ -64,7 +89,7 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	return Midpoint
 
 
-sponsor = [[4,10], [3,5], [8,10]]
+sponsor = [[12,10], [3,5], [8,10]]
 users = [[80,10], [10,5], [8,30]]
 
-print(findMiddlePoint(sponsor, users))
+#print(findMiddlePoint(sponsor, users))
