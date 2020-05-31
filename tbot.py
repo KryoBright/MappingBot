@@ -1,5 +1,26 @@
 import telebot
 import re
+from threading import Timer,Thread,Event
+
+
+class perpetualTimer():
+
+   def __init__(self,t,hFunction):
+      self.t=t
+      self.hFunction = hFunction
+      self.thread = Timer(self.t,self.handle_function)
+
+   def handle_function(self):
+      self.hFunction()
+      self.thread = Timer(self.t,self.handle_function)
+      self.thread.start()
+
+   def start(self):
+      self.thread.start()
+
+   def cancel(self):
+      self.thread.cancel()
+      
 import meeting_point
 
 # средняя точка, формулы в соседнем файле
@@ -14,6 +35,14 @@ users = []
 last = ["ls"]
 rooms = []
 room_id=[0]
+users_messages={}
+
+i_tmp=[0]
+
+def get_location():
+	i_tmp[0]+=1
+	return [i_tmp[0],i_tmp[0]]
+
 cords = {}
 
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
@@ -98,7 +127,7 @@ def room_join(message):
 		joinRoom(int(roomId),userId,nick)
 
 @bot.message_handler(regexp="\/say_room .+")
-def room_create(message):
+def room_say(message):
 	text=re.search(r".+",message.text[10::]).group(0)
 	userId = message.from_user.id
 	roomId=-1
@@ -120,6 +149,7 @@ def room_create(message):
 		for tmpu in rc[1::2]:
 			if not(tmpu==userId):
 				bot.send_message(tmpu,text1)
+				
 @bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["rooms"])
 def all_send(message):
 	for r in rooms:
@@ -144,7 +174,27 @@ def all_send(message):
 		cords[c][1]=msg.location.longitude
 		bot.delete_message(users[0][0],msg.message_id)
 		
-
+#@bot.message_handler(commands=['send_loc'])
+def update_loc():
+	for i in rooms:
+		loc=get_location()##Room specific arguments
+		for y in i[1::2]:
+			ind=-1
+			for c in users_messages:
+				if (c == y):
+					ind=users_messages[c]
+			res=False
+			if (ind!=-1):
+				res=bot.edit_message_live_location(chat_id=y,message_id=ind,latitude=loc[0],longitude=loc[1])
+			if (res==True)or(ind == -1):
+				msg=bot.send_location(y,loc[0],loc[1],live_period=86400)
+				users_messages[y]=msg.message_id
+	
+@bot.message_handler(commands=['cont_upd'])
+def cont_upd(message):
+	t = perpetualTimer(1,update_loc)
+	t.start()
+	
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['help'])
 def send_help(message):
@@ -184,7 +234,27 @@ def all_send(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
 	last[0] = message.text
-	bot.reply_to(message, message.text)
+	text=message.text
+	userId = message.from_user.id
+	roomId=-1
+	for u in users:
+		if (u[0] == userId):
+			roomId=u[2]
+	if (roomId==-1):
+		bot.reply_to(message, message.text)
+	else:
+		rc=[]
+		for r in rooms:
+			if (r[0]==roomId):
+				rc=r
+		un=""
+		for i,t in enumerate(rc):
+			if (t==userId):
+				un=rc[i+1]
+		text1=un+" says: "+text
+		for tmpu in rc[1::2]:
+			if not(tmpu==userId):
+				bot.send_message(tmpu,text1)
 
 
 bot.polling()
