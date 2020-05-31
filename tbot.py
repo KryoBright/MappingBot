@@ -14,6 +14,7 @@ users = []
 last = ["ls"]
 rooms = []
 room_id=[0]
+cords = {}
 
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
 help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
@@ -127,7 +128,23 @@ def all_send(message):
 			text=text+str(t)
 			text=text+","
 		bot.send_message(message.from_user.id,text)
+
+@bot.message_handler(content_types=['location'])
+def handle_location(message):
+    cords[message.from_user.id] = [message.location.latitude, message.location.longitude,message.message_id,message.from_user.id]
+    print(cords)
+				
+@bot.message_handler(commands=["updateLoc"])
+def all_send(message):
+	for c in cords:
+		msg=bot.forward_message(users[0][0],cords[c][3],disable_notification=True,message_id=cords[c][2])
+		print(msg.location.latitude)
+		print(msg.location.longitude)
+		cords[c][0]=msg.location.latitude
+		cords[c][1]=msg.location.longitude
+		bot.delete_message(users[0][0],msg.message_id)
 		
+
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['help'])
 def send_help(message):
