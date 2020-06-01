@@ -64,15 +64,17 @@ def sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinate
 
 def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	sponsorСoordinates = sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinates)
-
-	sponsorsMidpoint = toupleMean(sponsorСoordinates)
 	usersMidpoint = toupleMean(usersCoordinates)
-
-	sponsorsWeight = 3
-	Midpoint = [
-		(sponsorsWeight * sponsorsMidpoint[0] + usersMidpoint[0]) / (sponsorsWeight + 1), 
-		(sponsorsWeight * sponsorsMidpoint[1] + usersMidpoint[1]) / (sponsorsWeight + 1)
-	]
+	Midpoint=[0,0]
+	if len(sponsorСoordinates)>0:
+		sponsorsMidpoint = toupleMean(sponsorСoordinates)
+		sponsorsWeight = 3
+		Midpoint = [
+			(sponsorsWeight * sponsorsMidpoint[0] + usersMidpoint[0]) / (sponsorsWeight + 1), 
+			(sponsorsWeight * sponsorsMidpoint[1] + usersMidpoint[1]) / (sponsorsWeight + 1)
+		]
+	else:
+		Midpoint = [usersMidpoint[0], usersMidpoint[1]]
 
 	#print(sponsorsMidpoint)
 	#print(usersMidpoint)
