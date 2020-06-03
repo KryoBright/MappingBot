@@ -60,7 +60,7 @@ cords = {}
 
 #OLD.Needs rework
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
-help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
+help_commans_keyboard.row('/help', '/create_room', '/join_room', '/leave_room', '/meeting')
 @bot.message_handler(commands=['commands', 'c'])
 def help_commands_menu(message):
 	bot.send_message(message.chat.id, 'Привет, перед тобой список доступных команд:', reply_markup=help_commans_keyboard)
@@ -125,7 +125,13 @@ def leaveRoom(userId,room_id):
 					text="You left room "+str(room_id)
 					bot.send_message(userId,text)
 					print(f'User with id {userId} left room {room_id}')
-
+                    
+@bot.message_handler(regexp="\/leave_room .+")
+def leaveRoomCom(message):
+    res = re.search(r"(.+)",message.text[12::])
+    room_id = res.group(1)
+    leaveRoom(message.from_user.id,room_id)
+    
 #OK
 @bot.message_handler(regexp="\/join_room .+ .+")
 def room_join(message):
