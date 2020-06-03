@@ -39,6 +39,18 @@ users_messages={}
 i_tmp=[0]
 rooms_running=[]
 
+####### auth модуль
+admins = ['KryoBright','Egor_Pashkow','Mark_Kislov']
+def auth(fn):
+    def wrapped(message):
+        print(message.from_user.username)
+        if(message.from_user.username in admins):
+            return fn(message)
+        else:
+            return bot.send_message(message.from_user.id, 'Need admin rights')
+    return wrapped
+#######
+
 #PLACEHOLDER.Not used.Feel free to remove
 def get_location():
 	i_tmp[0]+=1
@@ -164,7 +176,8 @@ def room_say(message):
 				bot.send_message(tmpu,text1)
 
 #ADMIN COMMAND.Expend admins list
-@bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["rooms"])
+@bot.message_handler(commands=["rooms"])
+@auth
 def all_send(message):
 	for r in rooms:
 		text=""
@@ -283,6 +296,7 @@ def send_help(message):
 
 #ADMIN COMMAND.Fix only admin access
 @bot.message_handler(commands=['knowledge'])
+@auth
 def send_knowledge(message):
 	s = ""
 	for user in users:
@@ -290,7 +304,8 @@ def send_knowledge(message):
 	bot.reply_to(message, s)
 
 #ADMIN COMMAND.Expend admins list
-@bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["all"])
+@bot.message_handler(commands=["all"])
+@auth
 def all_send(message):
 	for user in users:
 		bot.send_message(user[0], last[0])
