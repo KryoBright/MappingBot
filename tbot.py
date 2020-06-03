@@ -39,30 +39,35 @@ users_messages={}
 i_tmp=[0]
 rooms_running=[]
 
+#PLACEHOLDER.Not used.Feel free to remove
 def get_location():
 	i_tmp[0]+=1
 	return [i_tmp[0],i_tmp[0]]
 
 cords = {}
 
+#OLD.Needs rework
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
 help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
 @bot.message_handler(commands=['commands', 'c'])
 def help_commands_menu(message):
 	bot.send_message(message.chat.id, 'Привет, перед тобой список доступных команд:', reply_markup=help_commans_keyboard)
 
-
+#OK
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
 	bot.reply_to(message, "Howdy, how are you doing?")
 	userId = message.from_user.id
+	print(f'User {message.from_user.username} started using bot!')
 	isFound = False
 	for user in users:
 		if (user[0] == userId):
 			isFound = True
 	if (not isFound):
 		users.append([userId, message.from_user.username,-1])
+		print("User added to list of users")
 
+#OK
 @bot.message_handler(regexp="\/create_room .+")
 def room_create(message):
 	nick=re.search(r".+",message.text[13::]).group(0)
@@ -73,10 +78,13 @@ def room_create(message):
 			isFound = True
 	if (not isFound):
 		users.append([userId, message.from_user.username,-1])
+		print("User added to list of users")
 	rooms.append([room_id[0]])
+	print(f'User {message.from_user.username} created room {room_id[0]} as {nick}')
 	joinRoom(room_id[0],userId,nick)
 	room_id[0]+=1
 
+#OK
 def joinRoom(room_id,userId,nick):
 	for user in users:
 			if (user[0] == userId):
@@ -90,8 +98,11 @@ def joinRoom(room_id,userId,nick):
 		if (user[0] == userId):
 			user[2]=room_id
 			text="You joined the room "+str(room_id)+" as "+nick
+			
+			print(f'User with id {userId} joined room {room_id} as {nick}')
 			bot.send_message(user[0],text)
 
+#OK
 def leaveRoom(userId,room_id):
 	for i in rooms:
 		if (i[0] == room_id):
@@ -101,8 +112,9 @@ def leaveRoom(userId,room_id):
 					i.pop(ind*2+1)
 					text="You left room "+str(room_id)
 					bot.send_message(userId,text)
+					print(f'User with id {userId} left room {room_id}')
 
-
+#OK
 @bot.message_handler(regexp="\/join_room .+ .+")
 def room_join(message):
 	res=re.search(r"(.+) (.+)",message.text[11::])
@@ -126,7 +138,8 @@ def room_join(message):
 	else:
 		joinRoom(int(roomId),userId,nick)
 
-@bot.message_handler(regexp="\/say_room .+")
+#DEPRECATED. Check for safe delete
+#@bot.message_handler(regexp="\/say_room .+")
 def room_say(message):
 	text=re.search(r".+",message.text[10::]).group(0)
 	userId = message.from_user.id
@@ -150,6 +163,7 @@ def room_say(message):
 			if not(tmpu==userId):
 				bot.send_message(tmpu,text1)
 
+#ADMIN COMMAND.Expend admins list
 @bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["rooms"])
 def all_send(message):
 	for r in rooms:
@@ -159,11 +173,13 @@ def all_send(message):
 			text=text+","
 		bot.send_message(message.from_user.id,text)
 
+#Handles base location.Need to expand.Check wiki/bugs for more info
 @bot.message_handler(content_types=['location'])
 def handle_location(message):
     cords[message.from_user.id] = [message.location.latitude, message.location.longitude,message.message_id,message.from_user.id]
     print(cords)
 
+#OK.Need to expand.Check wiki/bugs for more info
 #@bot.message_handler(commands=["updateLoc"])
 def upd_locations():
 	for c in cords:
@@ -174,6 +190,7 @@ def upd_locations():
 		cords[c][1]=msg.location.longitude
 		bot.delete_message(users[0][0],msg.message_id)
 
+#Overall OK.Needs fix.Check wiki/bugs for more info
 #@bot.message_handler(commands=['send_loc'])
 def update_loc(user_tg_id,meetpoint):
 	loc=meetpoint
@@ -184,16 +201,19 @@ def update_loc(user_tg_id,meetpoint):
 	res=False
 	if (ind!=-1):
 		res=bot.edit_message_live_location(chat_id=user_tg_id,message_id=ind,latitude=loc[0],longitude=loc[1])
+		print(f'Updated location for user with id {user_tg_id}')
 	if (res==True)or(ind == -1):
 		msg=bot.send_location(user_tg_id,loc[0],loc[1],live_period=86400)
 		users_messages[user_tg_id]=msg.message_id
+		print(f'Resend location for user with id {user_tg_id}')
 
-
-@bot.message_handler(commands=['cont_upd'])
+#DEPRECATED. Check for safe delete
+#@bot.message_handler(commands=['cont_upd'])
 def cont_upd(message):
 	t = perpetualTimer(1,update_loc)
 	t.start()
 
+#OK.Arranges meetings.Needs counter command and logging
 @bot.message_handler(commands=['meeting'])
 def meeting_process(message):
 	userId=message.from_user.id
@@ -217,6 +237,7 @@ def meeting_process(message):
 					for uids in roomTmp[1::2]:
 						bot.send_message(uids,"Please,share LiveLocation if you want to be included to room meeting point calculations.Do not delete any messages send by you or bot from this point!")
 	
+#OK
 @bot.message_handler(commands=['help'])
 def send_help(message):
 	help_text="""Commands,which can be used anytime:
@@ -239,6 +260,7 @@ def send_help(message):
 				"""
 	bot.reply_to(message, help_text)
 	
+###DEPRECATED. Check for safe delete
 
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['send_my_geo'])
@@ -257,7 +279,9 @@ def send_help(message):
 def send_help(message):
 	bot.reply_to(message, "Маршрут на карте (можно как-то передать данные другого пользователя с которым будет встреча)")
 
-# выводит пользователей в сети
+###
+
+#ADMIN COMMAND.Fix only admin access
 @bot.message_handler(commands=['knowledge'])
 def send_knowledge(message):
 	s = ""
@@ -265,13 +289,13 @@ def send_knowledge(message):
 		s += "," + str(user[1])
 	bot.reply_to(message, s)
 
-
+#ADMIN COMMAND.Expend admins list
 @bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["all"])
 def all_send(message):
 	for user in users:
 		bot.send_message(user[0], last[0])
 
-
+#OK
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
 	last[0] = message.text
@@ -293,10 +317,12 @@ def echo_all(message):
 			if (t==userId):
 				un=rc[i+1]
 		text1=un+" says: "+text
+		ptint(f'Room {roomId} : {text1}')
 		for tmpu in rc[1::2]:
 			if not(tmpu==userId):
 				bot.send_message(tmpu,text1)
 
+#Overall OK.Needs check for optimization
 def main_process():
 	upd_locations()
 	for tgt in rooms_running:
