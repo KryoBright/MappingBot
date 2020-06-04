@@ -63,12 +63,12 @@ help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
 help_commans_keyboard.row('/help', '/create_room', '/join_room', '/leave_room', '/meeting')
 @bot.message_handler(commands=['commands', 'c'])
 def help_commands_menu(message):
-	bot.send_message(message.chat.id, 'Привет, перед тобой список доступных команд:', reply_markup=help_commans_keyboard)
+	bot.send_message(message.chat.id, 'Available commands:', reply_markup=help_commans_keyboard)
 
 #OK
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-	bot.reply_to(message, "Howdy, how are you doing?")
+	bot.reply_to(message, "Hi, I am ready to help you")
 	userId = message.from_user.id
 	print(f'User {message.from_user.username} started using bot!')
 	isFound = False
@@ -110,7 +110,6 @@ def joinRoom(room_id,userId,nick):
 		if (user[0] == userId):
 			user[2]=room_id
 			text="You joined the room "+str(room_id)+" as "+nick
-			
 			print(f'User with id {userId} joined room {room_id} as {nick}')
 			bot.send_message(user[0],text)
 
@@ -166,7 +165,7 @@ def room_say(message):
 		if (u[0] == userId):
 			roomId=u[2]
 	if (roomId==-1):
-		bot.send_message(userId,"You are not currently in the room")
+		bot.send_message(userId,"You should be in room to execute this command")
 	else:
 		rc=[]
 		for r in rooms:
@@ -247,14 +246,14 @@ def meeting_process(message):
 		for tmp in rooms_running:
 			r_exec=(tmp==roomId)
 		if (r_exec):
-			bot.send_message(userId,"Meeting point is already being calculated for your room.You can request new map message with /*PLACEHOLDER_COMMAND*/")
+			bot.send_message(userId,"Meeting point is already being calculated for your room. You can request new map message with /resend_map")
 		else:
 			rooms_running.append(roomId)
 			bot.send_message(userId,"Your room added to list of executing rooms")
 			for roomTmp in rooms:
 				if (roomTmp[0]==roomId):
 					for uids in roomTmp[1::2]:
-						bot.send_message(uids,"Please,share LiveLocation if you want to be included to room meeting point calculations.Do not delete any messages send by you or bot from this point!")
+						bot.send_message(uids,"Please, share LiveLocation if you want to be included to room meeting point calculations. Do not delete any messages send by you or bot from this point!")
 	
 #OK
 @bot.message_handler(commands=['help'])
@@ -284,19 +283,19 @@ def send_help(message):
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['send_my_geo'])
 def send_help(message):
-	bot.reply_to(message, "Бот получил геоданные")
+	bot.reply_to(message, "Bot got geodata")
 
 @bot.message_handler(commands=['create_room'])
 def send_help(message):
-	bot.reply_to(message, "Создание комнаты")
+	bot.reply_to(message, "Room created")
 
 @bot.message_handler(commands=['show_map'])
 def send_help(message):
-	bot.reply_to(message, "Типо карта")
+	bot.reply_to(message, "Map shown")
 
 @bot.message_handler(commands=['create_rout'])
 def send_help(message):
-	bot.reply_to(message, "Маршрут на карте (можно как-то передать данные другого пользователя с которым будет встреча)")
+	bot.reply_to(message, "Map route built")
 
 ###
 
