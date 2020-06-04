@@ -82,6 +82,7 @@ def send_welcome(message):
 #OK
 @bot.message_handler(regexp="\/create_room .+")
 def room_create(message):
+	message.text = ' '.join(message.text.split())
 	nick=re.search(r".+",message.text[13::]).group(0)
 	userId = message.from_user.id
 	isFound = False
@@ -127,13 +128,15 @@ def leaveRoom(userId,room_id):
                     
 @bot.message_handler(regexp="\/leave_room .+")
 def leaveRoomCom(message):
+    message.text = ' '.join(message.text.split())
     res = re.search(r"(.+)",message.text[12::])
     room_id = res.group(1)
-    leaveRoom(message.from_user.id,room_id)
+    leaveRoom(message.from_user.id,int(room_id))
     
 #OK
 @bot.message_handler(regexp="\/join_room .+ .+")
 def room_join(message):
+	message.text = ' '.join(message.text.split())
 	res=re.search(r"(.+) (.+)",message.text[11::])
 	roomId=res.group(1)
 	nick=res.group(2)
