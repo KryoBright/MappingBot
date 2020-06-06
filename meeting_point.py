@@ -62,17 +62,45 @@ def sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinate
 
 	return filterSponsorСoordinates
 
+def calcilateDistansesArrayFromPoint(array, point):
+	result = []
+	for item in array:
+		x = item[0] - point[0]
+		y = item[1] - point[1]
+		distanse = (x ** 2 + y ** 2) ** 0.5
+		result.append([item[0], item[1], distanse])
+	return result
+
+
+def filterImpotentCoords(coords, midPoint):
+	if(len(coords) <= 1):
+		return coords
+	coords.sort(key=lambda x: x[2])
+
+	result = []
+	for i in range(int(len(coords) / 2)):
+		result.append([coords[i][0], coords[i][1]])
+	return result
+	
+
+def exactToupleMeans(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint):
+	sponsorСoordinates = calcilateDistansesArrayFromPoint(sponsorСoordinates, sponsorsMidpoint)
+	usersCoordinates = calcilateDistansesArrayFromPoint(usersCoordinates, usersMidpoint)
+	return [toupleMean(filterImpotentCoords(sponsorСoordinates, sponsorsMidpoint)), toupleMean(filterImpotentCoords(usersCoordinates, sponsorsMidpoint))]
+
+
 def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	sponsorСoordinates = sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinates)
 	usersMidpoint = toupleMean(usersCoordinates)
 	Midpoint=[0,0]
 	if len(sponsorСoordinates)>0:
-		sponsorsMidpoint = toupleMean(sponsorСoordinates)
-		sponsorsWeight = 3
-		Midpoint = [
-			(sponsorsWeight * sponsorsMidpoint[0] + usersMidpoint[0]) / (sponsorsWeight + 1), 
-			(sponsorsWeight * sponsorsMidpoint[1] + usersMidpoint[1]) / (sponsorsWeight + 1)
-		]
+		[sponsorsMidpoint, usersMidpoint] = exactToupleMeans(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint)
+	sponsorsWeight = len(sponsorСoordinates) * 2
+	usersWeight = len(usersCoordinates)
+	Midpoint = [
+		((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
+		((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
+	]
 	else:
 		Midpoint = [usersMidpoint[0], usersMidpoint[1]]
 
@@ -91,7 +119,7 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	return Midpoint
 
 
-sponsor = [[12,10], [3,5], [8,10]]
-users = [[80,10], [10,5], [8,30]]
+sponsor = [[9,10], [9,11], [9,10], [9,10]]
+users = [[9,10], [8,10], [8,11]]
 
-#print(findMiddlePoint(sponsor, users))
+print(findMiddlePoint(sponsor, users))
