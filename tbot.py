@@ -1,5 +1,26 @@
 import telebot
 import re
+from threading import Timer,Thread,Event
+
+
+class perpetualTimer():
+
+   def __init__(self,t,hFunction):
+      self.t=t
+      self.hFunction = hFunction
+      self.thread = Timer(self.t,self.handle_function)
+
+   def handle_function(self):
+      self.hFunction()
+      self.thread = Timer(self.t,self.handle_function)
+      self.thread.start()
+
+   def start(self):
+      self.thread.start()
+
+   def cancel(self):
+      self.thread.cancel()
+
 import meeting_point
 
 # средняя точка, формулы в соседнем файле
@@ -14,6 +35,15 @@ users = []
 last = ["ls"]
 rooms = []
 room_id=[0]
+users_messages={}
+i_tmp=[0]
+rooms_running=[]
+
+def get_location():
+	i_tmp[0]+=1
+	return [i_tmp[0],i_tmp[0]]
+
+cords = {}
 
 help_commans_keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
 help_commans_keyboard.row('/start', '/help', '/knowledge', '/send_my_geo', '/create_room', '/show_map', '/create_rout')
@@ -32,7 +62,7 @@ def send_welcome(message):
 			isFound = True
 	if (not isFound):
 		users.append([userId, message.from_user.username,-1])
-		
+
 @bot.message_handler(regexp="\/create_room .+")
 def room_create(message):
 	nick=re.search(r".+",message.text[13::]).group(0)
@@ -71,7 +101,7 @@ def leaveRoom(userId,room_id):
 					i.pop(ind*2+1)
 					text="You left room "+str(room_id)
 					bot.send_message(userId,text)
-	
+
 
 @bot.message_handler(regexp="\/join_room .+ .+")
 def room_join(message):
@@ -97,7 +127,7 @@ def room_join(message):
 		joinRoom(int(roomId),userId,nick)
 
 @bot.message_handler(regexp="\/say_room .+")
-def room_create(message):
+def room_say(message):
 	text=re.search(r".+",message.text[10::]).group(0)
 	userId = message.from_user.id
 	roomId=-1
@@ -119,6 +149,7 @@ def room_create(message):
 		for tmpu in rc[1::2]:
 			if not(tmpu==userId):
 				bot.send_message(tmpu,text1)
+
 @bot.message_handler(func=(lambda message: (message.from_user.username == "KryoBright")), commands=["rooms"])
 def all_send(message):
 	for r in rooms:
@@ -127,7 +158,65 @@ def all_send(message):
 			text=text+str(t)
 			text=text+","
 		bot.send_message(message.from_user.id,text)
-		
+
+@bot.message_handler(content_types=['location'])
+def handle_location(message):
+    cords[message.from_user.id] = [message.location.latitude, message.location.longitude,message.message_id,message.from_user.id]
+    print(cords)
+
+#@bot.message_handler(commands=["updateLoc"])
+def upd_locations():
+	for c in cords:
+		msg=bot.forward_message(users[0][0],cords[c][3],disable_notification=True,message_id=cords[c][2])
+		print(msg.location.latitude)
+		print(msg.location.longitude)
+		cords[c][0]=msg.location.latitude
+		cords[c][1]=msg.location.longitude
+		bot.delete_message(users[0][0],msg.message_id)
+
+#@bot.message_handler(commands=['send_loc'])
+def update_loc(user_tg_id,meetpoint):
+	loc=meetpoint
+	ind=-1
+	for c in users_messages:
+		if (c == user_tg_id):
+			ind=users_messages[c]
+	res=False
+	if (ind!=-1):
+		res=bot.edit_message_live_location(chat_id=user_tg_id,message_id=ind,latitude=loc[0],longitude=loc[1])
+	if (res==True)or(ind == -1):
+		msg=bot.send_location(user_tg_id,loc[0],loc[1],live_period=86400)
+		users_messages[user_tg_id]=msg.message_id
+
+
+@bot.message_handler(commands=['cont_upd'])
+def cont_upd(message):
+	t = perpetualTimer(1,update_loc)
+	t.start()
+
+@bot.message_handler(commands=['meeting'])
+def meeting_process(message):
+	userId=message.from_user.id
+	roomId=-1
+	for u in users:
+		if (u[0] == userId):
+			roomId=u[2]
+	if (roomId==-1):
+		bot.send_message(userId,"You should be in room to execute this command")
+	else:
+		r_exec=False
+		for tmp in rooms_running:
+			r_exec=(tmp==roomId)
+		if (r_exec):
+			bot.send_message(userId,"Meeting point is already being calculated for your room.You can request new map message with /*PLACEHOLDER_COMMAND*/")
+		else:
+			rooms_running.append(roomId)
+			bot.send_message(userId,"Your room added to list of executing rooms")
+			for roomTmp in rooms:
+				if (roomTmp[0]==roomId):
+					for uids in roomTmp[1::2]:
+						bot.send_message(uids,"Please,share LiveLocation if you want to be included to room meeting point calculations.Do not delete any messages send by you or bot from this point!")
+	
 # заглушки из таска в ПМ.
 @bot.message_handler(commands=['help'])
 def send_help(message):
@@ -167,7 +256,49 @@ def all_send(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
 	last[0] = message.text
-	bot.reply_to(message, message.text)
+	text=message.text
+	userId = message.from_user.id
+	roomId=-1
+	for u in users:
+		if (u[0] == userId):
+			roomId=u[2]
+	if (roomId==-1):
+		bot.reply_to(message, message.text)
+	else:
+		rc=[]
+		for r in rooms:
+			if (r[0]==roomId):
+				rc=r
+		un=""
+		for i,t in enumerate(rc):
+			if (t==userId):
+				un=rc[i+1]
+		text1=un+" says: "+text
+		for tmpu in rc[1::2]:
+			if not(tmpu==userId):
+				bot.send_message(tmpu,text1)
 
+def main_process():
+	upd_locations()
+	sponsor = [[12,10], [3,5], [8,10]]
+	print(rooms_running)
+	for tgt in rooms_running:
+		for tmp in rooms:
+			cords_room=[]
+			if (tgt==tmp[0]):
+				room_cap=0
+				for uids in tmp[1::2]:
+					for c in cords:
+						if (c==uids):
+							cords_room.append(cords[c][0:2:])
+							room_cap=room_cap+1
+				if (room_cap>0):
+					point=meeting_point.findMiddlePoint(sponsor, cords_room)
+					print (tmp[1::2])
+					for uids in tmp[1::2]:
+						update_loc(uids,point)
+						##Can result in overposting,add sleep functions!
 
-bot.polling()
+t = perpetualTimer(2,main_process)
+t.start()
+bot.polling() 
