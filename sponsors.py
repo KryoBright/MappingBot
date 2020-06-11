@@ -107,7 +107,7 @@ def sponsor_help(message):
 @bot.message_handler(commands=['cash_balance'])
 @auth
 def cash_balance(message):
-    bot.send_message(message.from_user.id, "You have " + str(sponsorsList[message.from_user.id]))
+    bot.send_message(message.from_user.id, "You have " + str(sponsorsList[message.from_user.id].balance))
 
 @bot.message_handler(commands=['put_money'])
 @auth
