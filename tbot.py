@@ -228,12 +228,6 @@ def update_loc(user_tg_id,meetpoint):
 		users_messages[user_tg_id]=msg.message_id
 		print(f'Resend location for user with id {user_tg_id}')
 
-#DEPRECATED. Check for safe delete
-#@bot.message_handler(commands=['cont_upd'])
-def cont_upd(message):
-	t = perpetualTimer(1,update_loc)
-	t.start()
-
 #OK.Arranges meetings.Needs counter command and logging
 @bot.message_handler(commands=['meeting'])
 def meeting_process(message):
