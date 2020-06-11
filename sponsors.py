@@ -20,7 +20,8 @@ class SponsorPoint:
 sponsorsList = {}
 verifiedSponsors = []
 
-global last
+global last 
+last = None
 
 def auth(fn):
     def wrapped(message):
@@ -53,21 +54,25 @@ def add_place(message):
 
 def get_reg_name(message):
     global last
-    Point = SponsorPoint()
-    Profile = sponsorsList[message.from_user.id] 
-    Point.name = message.text
-    Profile.sposorsPoints[Point.name] = Point
-    Point.SponsorProfile = Profile
-    
-    last = SponsorPoint
-    bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point.')
+    Profile = sponsorsList[message.from_user.id]
+    if(message.text in Profile.sposorsPoints.keys()):
+        bot.send_message(message.from_user.id, 'You already have a point with that name.')
+    else:
+        Point = SponsorPoint()
+        Point.name = message.text
+        Profile.sposorsPoints[Point.name] = Point
+        Point.SponsorProfile = Profile
+        last = SponsorPoint
+        bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point.')
+        
 
-@bot.message_handler(content_types=['location'])
+@bot.message_handler(func=lambda x:False if last is None else True, content_types=['location'])
 @auth
 def handle_location(message):
     global last
     last.latitude = message.location.latitude
     last.longitude = message.location.longitude
+    last = None
     bot.send_message(message.from_user.id, 'Good. I remembered.')
 
 @bot.message_handler(commands=['del_place'])
@@ -93,7 +98,7 @@ def get_place_list(message):
 
 @bot.message_handler(commands=['sponsor_help'])
 def sponsor_help(message):
-	bot.reply_to(message, 
+	bot.send_message(message.from_user.id, 
     """
     /get_sponsor - to become sponsor
     /cash_balance - to find out the balance
@@ -116,7 +121,10 @@ def put_money(message):
     bot.register_next_step_handler(message, put_money_ver)
 
 def put_money_ver(message):
-    sponsorsList[message.from_user.id].balance += 1000# for test
-    bot.send_message(message.from_user.id, "Payment in amount " + str(message.text))
+    if(str(message.text).isdigit()):
+        sponsorsList[message.from_user.id].balance += int(message.text)# for test
+        bot.send_message(message.from_user.id, "Payment in amount " + str(message.text))
+    else:
+        bot.send_message(message.from_user.id, "Bad! You entered is not the amount")
 
 bot.polling()
