@@ -95,13 +95,14 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	usersMidpoint = toupleMean(usersCoordinates)
 	Midpoint=[0,0]
 	if len(sponsorСoordinates)>0:
+		sponsorsMidpoint = toupleMean(sponsorСoordinates)
 		[sponsorsMidpoint, usersMidpoint] = exactToupleMeans(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint)
-	sponsorsWeight = len(sponsorСoordinates) * 2
-	usersWeight = len(usersCoordinates)
-	Midpoint = [
-		((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
-		((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
-	]
+		sponsorsWeight = len(sponsorСoordinates) * 2
+		usersWeight = len(usersCoordinates)
+		Midpoint = [
+			((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
+			((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
+		]
 	else:
 		Midpoint = [usersMidpoint[0], usersMidpoint[1]]
 

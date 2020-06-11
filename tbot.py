@@ -1,7 +1,7 @@
 ﻿import telebot
 import re
 from threading import Timer,Thread,Event
-
+import hashlib
 
 class perpetualTimer():
 
@@ -38,6 +38,7 @@ room_id=[0]
 users_messages={}
 i_tmp=[0]
 rooms_running=[]
+rooms_pass={}
 
 ####### auth модуль
 admins = ['KryoBright','Egor_Pashkow','Mark_Kislov']
@@ -78,6 +79,24 @@ def send_welcome(message):
 	if (not isFound):
 		users.append([userId, message.from_user.username,-1])
 		print("User added to list of users")
+
+#OK
+@bot.message_handler(regexp="\/set_pass .+")
+def room_create(message):
+	message.text = ' '.join(message.text.split())
+	passwd=re.search(r".+",message.text[10::]).group(0)
+	passwd_n=re.search(r"[0-9a-zA-Z]+",message.text[10::]).group(0)
+	userId = message.from_user.id
+	if (passwd!=passwd_n):
+		bot.send_message(userId,"Your password seems to be unrecognized. Perhaps, you used not allowed symbol?")
+	else:
+		for user in users:
+			if (user[0] == userId):
+				if (user[2] == -1):
+					bot.send_message(userId,"You can only use this command in room!")
+				else:
+					rooms_pass[int(user[2])]=hashlib.md5(passwd.encode('utf-8')).hexdigest()
+
 
 #OK
 @bot.message_handler(regexp="\/create_room .+")
@@ -126,37 +145,76 @@ def leaveRoom(userId,room_id):
 					bot.send_message(userId,text)
 					print(f'User with id {userId} left room {room_id}')
                     
-@bot.message_handler(regexp="\/leave_room .+")
+@bot.message_handler(regexp="\/leave_room [0-9]+")
 def leaveRoomCom(message):
     message.text = ' '.join(message.text.split())
-    res = re.search(r"(.+)",message.text[12::])
+    res = re.search(r"([0-9]+)",message.text[12::])
     room_id = res.group(1)
     leaveRoom(message.from_user.id,int(room_id))
     
-#OK
-@bot.message_handler(regexp="\/join_room .+ .+")
+	
+@bot.message_handler(regexp="\/join_room [0-9]+:[0-9a-zA-Z]+ .+")
 def room_join(message):
 	message.text = ' '.join(message.text.split())
-	res=re.search(r"(.+) (.+)",message.text[11::])
+	res=re.search(r"([0-9]+):([0-9a-zA-Z]+) (.+)",message.text[11::])
+	roomId=res.group(1)
+	pswd_dg=hashlib.md5(res.group(2).encode('utf-8')).hexdigest()
+	nick=res.group(3)
+	userId = message.from_user.id
+	happen=False
+	for r_tm in rooms_pass:
+		if (r_tm==int(roomId))and(rooms_pass[r_tm]==pswd_dg):
+			happen=True
+			print(roomId)
+			print(nick)
+			isFound = False
+			for user in users:
+				if (user[0] == userId):
+					isFound = True
+			if (not isFound):
+				users.append([userId, message.from_user.username,-1])
+			roomFound=False
+			for r in rooms:
+				if (r[0]==int(roomId)):
+					roomFound=True
+			if not(roomFound):
+				bot.send_message(userId,"Wrong room ID")
+			else:
+				joinRoom(int(roomId),userId,nick)
+	if not(happen):
+		bot.send_message(userId,"This room is not protected by password or it is incorrect")
+	
+#OK
+@bot.message_handler(regexp="\/join_room [0-9]+ .+")
+def room_join(message):
+	message.text = ' '.join(message.text.split())
+	res=re.search(r"([0-9]+) (.+)",message.text[11::])
 	roomId=res.group(1)
 	nick=res.group(2)
 	print(roomId)
 	print(nick)
+	room_prot=False
+	for r in rooms_pass:
+		if (r==int(roomId)):
+			room_prot=True
 	userId = message.from_user.id
-	isFound = False
-	for user in users:
-		if (user[0] == userId):
-			isFound = True
-	if (not isFound):
-		users.append([userId, message.from_user.username,-1])
-	roomFound=False
-	for r in rooms:
-		if (str(r[0])==roomId):
-			roomFound=True
-	if not(roomFound):
-		bot.send_message(userId,"Wrong room ID")
+	if (room_prot):
+		bot.send_message(userId,"Room protected by password")
 	else:
-		joinRoom(int(roomId),userId,nick)
+		isFound = False
+		for user in users:
+			if (user[0] == userId):
+				isFound = True
+		if (not isFound):
+			users.append([userId, message.from_user.username,-1])
+		roomFound=False
+		for r in rooms:
+			if (r[0]==int(roomId)):
+				roomFound=True
+		if not(roomFound):
+			bot.send_message(userId,"Wrong room ID")
+		else:
+			joinRoom(int(roomId),userId,nick)
 
 #DEPRECATED. Check for safe delete
 #@bot.message_handler(regexp="\/say_room .+")
@@ -334,7 +392,7 @@ def echo_all(message):
 			if (t==userId):
 				un=rc[i+1]
 		text1=un+" says: "+text
-		ptint(f'Room {roomId} : {text1}')
+		print(f'Room {roomId} : {text1}')
 		for tmpu in rc[1::2]:
 			if not(tmpu==userId):
 				bot.send_message(tmpu,text1)
