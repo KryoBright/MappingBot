@@ -145,12 +145,17 @@ def leaveRoom(userId,room_id):
 					bot.send_message(userId,text)
 					print(f'User with id {userId} left room {room_id}')
                     
-@bot.message_handler(regexp="\/leave_room [0-9]+")
+@bot.message_handler(regexp="\/leave_room")
 def leaveRoomCom(message):
-    message.text = ' '.join(message.text.split())
-    res = re.search(r"([0-9]+)",message.text[12::])
-    room_id = res.group(1)
-    leaveRoom(message.from_user.id,int(room_id))
+	userId=message.from_user.id
+	room_id=-1
+	for user in users:
+		if (user[0] == userId):
+			room_id=user[2]
+    if (room_id==-1):
+		bot.send_message(userId,"You are currently not in the room")
+	else:
+		leaveRoom(userId,room_id)
     
 	
 @bot.message_handler(regexp="\/join_room [0-9]+:[0-9a-zA-Z]+ .+")
