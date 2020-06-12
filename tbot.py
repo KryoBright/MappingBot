@@ -2,6 +2,7 @@
 import re
 from threading import Timer,Thread,Event
 import hashlib
+import time
 
 class perpetualTimer():
 
@@ -39,6 +40,7 @@ users_messages={}
 i_tmp=[0]
 rooms_running=[]
 rooms_pass={}
+last_clear=[0]
 
 ####### auth модуль
 admins = ['KryoBright','Egor_Pashkow','Mark_Kislov']
@@ -145,17 +147,12 @@ def leaveRoom(userId,room_id):
 					bot.send_message(userId,text)
 					print(f'User with id {userId} left room {room_id}')
                     
-@bot.message_handler(regexp="\/leave_room")
+@bot.message_handler(regexp="\/leave_room [0-9]+")
 def leaveRoomCom(message):
-	userId=message.from_user.id
-	room_id=-1
-	for user in users:
-		if (user[0] == userId):
-			room_id=user[2]
-    if (room_id==-1):
-		bot.send_message(userId,"You are currently not in the room")
-	else:
-		leaveRoom(userId,room_id)
+    message.text = ' '.join(message.text.split())
+    res = re.search(r"([0-9]+)",message.text[12::])
+    room_id = res.group(1)
+    leaveRoom(message.from_user.id,int(room_id))
     
 	
 @bot.message_handler(regexp="\/join_room [0-9]+:[0-9a-zA-Z]+ .+")
@@ -405,6 +402,9 @@ def echo_all(message):
 #Overall OK.Needs check for optimization
 def main_process():
 	upd_locations()
+	if ((time.time()-last_clear[0])>10):
+		rooms_clean()
+		last_clear[0]=time.time()
 	for tgt in rooms_running:
 		for tmp in rooms:
 			cords_room=[]
@@ -421,6 +421,14 @@ def main_process():
 						update_loc(uids,point)
 						##Can result in overposting,add sleep functions!
 
+def rooms_clean():
+	k=[]
+	for r in rooms:
+		if (len(r))>1:
+			k.append(r)
+	rooms[:]=k
+	
+last_clear[0]=0
 t = perpetualTimer(2,main_process)
 t.start()
 bot.polling() 
