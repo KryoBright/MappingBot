@@ -154,7 +154,7 @@ def leaveRoomCom(message):
 	for user in users:
 		if (user[0] == userId):
 			room_id=user[2]
-    if (room_id==-1):
+	if (room_id==-1):
 		bot.send_message(userId,"You are currently not in the room")
 	else:
 		leaveRoom(userId,room_id)
