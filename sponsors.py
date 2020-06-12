@@ -28,7 +28,7 @@ def auth(fn):
         if(message.from_user.id in verifiedSponsors):
             return fn(message)
         else:
-            return bot.send_message(message.from_user.id, 'You are not verified.')
+            return bot.send_message(message.from_user.id, 'You are not verified')
     return wrapped
 
     
@@ -43,7 +43,8 @@ def get_reg_sponsor(message):
     Profile.name = message.text
     sponsorsList[Profile.userId] = Profile
     verifiedSponsors.append(message.from_user.id)
-    bot.send_message(message.from_user.id, 'Ok. I remembered. Now you can use the sponsorship interface.')    
+    print("Company: ", message.text, " now can use the sponsorship interface")
+    bot.send_message(message.from_user.id, 'Ok. I remembered. Now you can use the sponsorship interface')    
     
 
 @bot.message_handler(commands=['add_place'])
@@ -56,14 +57,16 @@ def get_reg_name(message):
     global last
     Profile = sponsorsList[message.from_user.id]
     if(message.text in Profile.sposorsPoints.keys()):
-        bot.send_message(message.from_user.id, 'You already have a point with that name.')
+        print("Place: ", message.text, " such a place already exists")
+        bot.send_message(message.from_user.id, 'You already have a point with that name')
     else:
         Point = SponsorPoint()
         Point.name = message.text
         Profile.sposorsPoints[Point.name] = Point
         Point.SponsorProfile = Profile
         last = SponsorPoint
-        bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point.')
+        print("Place: ", message.text, " place successfully registered and waiting for sending coordinates")
+        bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
         
 
 @bot.message_handler(func=lambda x:False if last is None else True, content_types=['location'])
@@ -73,7 +76,8 @@ def handle_location(message):
     last.latitude = message.location.latitude
     last.longitude = message.location.longitude
     last = None
-    bot.send_message(message.from_user.id, 'Good. I remembered.')
+    print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
+    bot.send_message(message.from_user.id, 'Good. I remembered')
 
 @bot.message_handler(commands=['del_place'])
 @auth
@@ -84,9 +88,11 @@ def del_place(message):
 def get_del_name(message):
     try:
         del sponsorsList[message.from_user.id].sposorsPoints[message.text]
-        bot.send_message(message.from_user.id, 'Ok. I remembered.')
+        print("Place: ", message.text, " removed")
+        bot.send_message(message.from_user.id, 'Ok. I remembered')
     except KeyError:
-        bot.send_message(message.from_user.id, 'Bad! You have no such place.')
+        print("Place: ", message.text, " not deleted because it does not exist")
+        bot.send_message(message.from_user.id, 'Bad! You have no such place')
 
 @bot.message_handler(commands=['get_place_list'])
 @auth
@@ -106,7 +112,7 @@ def sponsor_help(message):
     /add_place - to add a sponsorship place
     /del_place - to remove sponsorship place
     /get_place_list - to display all sponsorship places
-    If the teams do not work you are not verified.
+    If the commands do not work you are not verified.
     """)
 
 @bot.message_handler(commands=['cash_balance'])
@@ -123,8 +129,10 @@ def put_money(message):
 def put_money_ver(message):
     if(str(message.text).isdigit()):
         sponsorsList[message.from_user.id].balance += int(message.text)# for test
+        print("Payment in amount: ", message.text)
         bot.send_message(message.from_user.id, "Payment in amount " + str(message.text))
     else:
+        print("Incorrect payment amount: ", message.text)
         bot.send_message(message.from_user.id, "Bad! You entered is not the amount")
 
 bot.polling()
