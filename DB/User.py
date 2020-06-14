@@ -9,13 +9,7 @@ class User:
 	lon = None
 
 	balance = 0
-
-
-class SponsorPoint:
-	telegrammUserId = None
-	lat = None
-	lon = None
-
+	password = None
 
 
 
@@ -40,25 +34,14 @@ def userPropUpdate(telegrammUserId, prop, value):
 #userPropUpdate(246375635543, 'roomName', 'mark')
 
 
-def addSponsor(telegrammUserId):
-	query = Template("MATCH (x:USER) where x.telegrammUserId='$telegrammUserId' SET x: SPONSOR SET x.balance=0 return (x)")
-	session.run(query.substitute(telegrammUserId=telegrammUserId))
-
-
-def addSonsorPoint(telegrammUserId, lat, lon):
-	query = Template("MATCH (SPONSOR:SPONSOR) WHERE SPONSOR.telegrammUserId='$telegrammUserId' CREATE (x:SPONSOR_POINT {telegrammUserId:'$telegrammUserId', lat:'$lat', lon:'$lon'}) CREATE (SPONSOR_POINT)-[r:Принадлежит]->(SPONSOR)")
-	session.run(query.substitute(telegrammUserId=user.telegrammUserId,lat=user.lat, lon=user.lon))
-
-addSonsorPoint(246375635543, 23, 365)
-#addSponsor(246375635543)
-
 def getUsers():
 	return session.run("MATCH (x:USER) return (x)")
 
-def getSponsors():
-	return session.run("MATCH (x:SPONSOR) return (x)")
 
+def getUser(telegrammUserId):
+	query = Template("MATCH (x:USER) WHERE x.telegrammUserId='$telegrammUserId' return (x)")
+	return session.run(query.substitute(telegrammUserId=telegrammUserId))
 
-users = getSponsors()
+users = getUsers()
 for user in users:
 	print(user)
