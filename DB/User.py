@@ -8,14 +8,19 @@ class User:
 	lat = None
 	lon = None
 
+	coordinatesBotMessageId = None
+	coordinatesBotMessageExpiration = None
+	coordinatesSelfMessageId = None
+	coordinatesSelfMessageExpiration = None
+
 	balance = 0
 	password = None
 
 
 
-def addUser(user):
-	query = Template("CREATE (N:USER {telegrammUserId:'$telegrammUserId',roomId:'$roomId', roomName:'$roomName', lat:'$lat', lon:'$lon'})")
-	session.run(query.substitute(telegrammUserId=user.telegrammUserId, roomId=user.roomId, roomName=user.roomName, lat=user.lat, lon=user.lon))
+def addUser(telegrammUserId):
+	query = Template("CREATE (N:USER {telegrammUserId:'$telegrammUserId'})")
+	session.run(query.substitute(telegrammUserId=telegrammUserId))
 
 user = User()
 user.telegrammUserId = 246375635543
