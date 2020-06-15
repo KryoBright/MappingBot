@@ -376,6 +376,74 @@ def send_knowledge(message):
 def all_send(message):
 	for user in users:
 		bot.send_message(user[0], last[0])
+		
+@bot.message_handler(regexp="\/invite .+")
+def invite(message):
+	userId=message.from_user.id
+	s_name=""
+	roomId=-1
+	for u in users:
+		if (u[0] == userId):
+			roomId=u[2]
+			s_name=u[1]
+	if (roomId==-1):
+		bot.send_message(userId,"You should be in room to execute this command")
+	else:
+		res=re.search(r" +@?(.+)",message.text[7::])
+		user_n=res.group(1)
+		ind=-1
+		for i,t in enumerate(users):
+			if (t[1]==user_n):
+				ind=i
+		if (ind==-1):
+			bot.send_message(userId,"This user does not use this bot! Tell them to do it ASAP!")
+		else:
+			markup=telebot.types.InlineKeyboardMarkup(row_width=1)
+			button1=telebot.types.InlineKeyboardButton(text="Accept",callback_data="j_room "+str(roomId)+" "+str(users[ind][0]))
+			
+			button2=telebot.types.InlineKeyboardButton(text="Decline",callback_data="declined "+str(userId)+" "+str(user_n))
+			
+			button3=telebot.types.InlineKeyboardButton(text="Mark as spam",callback_data="spam "+str(userId))
+			
+			markup.add(button1)
+			markup.add(button2)
+			markup.add(button3)
+			
+			bot.send_message(users[ind][0],"User "+s_name+" invites you to join his room",reply_markup=markup)
+			
+@bot.callback_query_handler(func=lambda call: True)
+def query_handler(call):
+	c_data=call.data.split()
+	if (c_data[0]=="j_room"):
+		for u in users:
+			if (int(u[0]) == int(c_data[2])):
+				joinRoom(int(c_data[1]),int(c_data[2]),u[1])
+		bot.delete_message(call.message.chat.id,call.message.message_id)
+	if (c_data[0]=="declined"):
+		bot.send_message(int(c_data[1]),"User "+c_data[2]+" declined your request")
+		bot.delete_message(call.message.chat.id,call.message.message_id)
+	if (c_data[0]=="spam"):
+		print("spam")
+		bot.delete_message(call.message.chat.id,call.message.message_id)
+	if (c_data[0]=="j_room_nd"):
+		joinRoom(int(c_data[1]),call.from_user.id,call.from_user.username)
+
+@bot.message_handler(regexp="\/invite_link")
+def invite(message):
+	userId=message.from_user.id
+	s_name=""
+	roomId=-1
+	for u in users:
+		if (u[0] == userId):
+			roomId=u[2]
+			s_name=u[1]
+	if (roomId==-1):
+		bot.send_message(userId,"You should be in room to execute this command")
+	else:
+		markup=telebot.types.InlineKeyboardMarkup(row_width=1)
+		button1=telebot.types.InlineKeyboardButton(text="Click here to join",callback_data="j_room_nd "+str(roomId))
+		markup.add(button1)
+		bot.send_message(userId,"Share this message to invite users into this room",reply_markup=markup)
 
 #OK
 @bot.message_handler(func=lambda message: True)
