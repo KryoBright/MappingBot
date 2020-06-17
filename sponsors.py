@@ -17,14 +17,36 @@ class SponsorPoint:
         self.latitude = 0
         self.longitude = 0
 
-sponsorsList = {}
-verifiedSponsors = []
+class SponsorData:
+    def __init__(self):
+        self.sponsorsList = {}
+        
+    def getAllUsers(self):
+        return self.sponsorsList
+        
+    def getUserById(self, userId):
+        for sponsor in self.sponsorsList.values():
+            if(sponsor.userId == userId):
+                return sponsor
+        return None
+        
+    def addNewUser(self, sponsorProfileIn):
+        self.sponsorsList[sponsorProfileIn.userId] = sponsorProfileIn   
+        
+    def getAllPoint(self):
+        res = []
+        for sponsor in self.sponsorsList:
+            for sponsorPoint in sponsor.sposorsPoints:
+                res.append(sponsorPoint)
+        return res
 
-last = {}
+SponsorData = SponsorData()
+
+tempRegistarationData = {}
 
 def auth(fn):
     def wrapped(message):
-        if(message.from_user.id in verifiedSponsors):
+        if(message.from_user.id in SponsorData.getAllUsers()):
             return fn(message)
         else:
             return bot.send_message(message.from_user.id, 'You are not verified')
@@ -40,8 +62,7 @@ def get_reg_sponsor(message):
     Profile = SponsorProfile()
     Profile.userId = message.from_user.id
     Profile.name = message.text
-    sponsorsList[Profile.userId] = Profile
-    verifiedSponsors.append(message.from_user.id)
+    SponsorData.addNewUser(Profile)
     print("Company: ", message.text, " now can use the sponsorship interface")
     bot.send_message(message.from_user.id, 'Ok. I remembered. Now you can use the sponsorship interface')    
     
@@ -53,13 +74,13 @@ def add_place(message):
     bot.register_next_step_handler(message, get_reg_name)
 
 def get_reg_name(message):
-    global last
-    Profile = sponsorsList[message.from_user.id]
+    global tempRegistarationData
+    Profile = SponsorData.getUserById(message.from_user.id)
     if(message.text in Profile.sposorsPoints.keys()):
         print("Place: ", message.text, " such a place already exists")
         bot.send_message(message.from_user.id, 'You already have a point with that name')
     else:
-        last[message.from_user.id] = message.text
+        tempRegistarationData[message.from_user.id] = message.text
         print("Place: ", message.text, " place successfully registered and waiting for sending coordinates")
         bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
         
@@ -67,19 +88,19 @@ def get_reg_name(message):
 @bot.message_handler(content_types=['location'])
 @auth
 def handle_location(message):
-    global last
-    if(not(message.from_user.id in last) or (last[message.from_user.id] is None)):
+    global tempRegistarationData
+    if(not(message.from_user.id in tempRegistarationData) or (tempRegistarationData[message.from_user.id] is None)):
         pass
     else:
-        Profile = sponsorsList[message.from_user.id]
+        Profile = SponsorData.getUserById(message.from_user.id)
         Point = SponsorPoint()
-        Point.name = last[message.from_user.id]
+        Point.name = tempRegistarationData[message.from_user.id]
         Point.latitude = message.location.latitude
         Point.longitude = message.location.longitude
         Profile.sposorsPoints[Point.name] = Point
         Point.SponsorProfile = Profile
         
-        last[message.from_user.id] = None
+        tempRegistarationData[message.from_user.id] = None
         print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
         bot.send_message(message.from_user.id, 'Good. I remembered')
 
@@ -91,7 +112,7 @@ def del_place(message):
 
 def get_del_name(message):
     try:
-        del sponsorsList[message.from_user.id].sposorsPoints[message.text]
+        del SponsorData.getUserById(message.from_user.id).sposorsPoints[message.text]
         print("Place: ", message.text, " removed")
         bot.send_message(message.from_user.id, 'Ok. I remembered')
     except KeyError:
@@ -102,7 +123,7 @@ def get_del_name(message):
 @auth
 def get_place_list(message):
     try:
-        bot.send_message(message.from_user.id, ",".join(sponsorsList[message.from_user.id].sposorsPoints.keys()))
+        bot.send_message(message.from_user.id, ",".join(SponsorData.getUserById(message.from_user.id).sposorsPoints.keys()))
     except Exception:
         bot.send_message(message.from_user.id, "List empty")
 
@@ -122,7 +143,7 @@ def sponsor_help(message):
 @bot.message_handler(commands=['cash_balance'])
 @auth
 def cash_balance(message):
-    bot.send_message(message.from_user.id, "You have " + str(sponsorsList[message.from_user.id].balance))
+    bot.send_message(message.from_user.id, "You have " + str(SponsorData.getUserById(message.from_user.id).balance))
 
 @bot.message_handler(commands=['put_money'])
 @auth
@@ -132,7 +153,7 @@ def put_money(message):
 
 def put_money_ver(message):
     if(str(message.text).isdigit()):
-        sponsorsList[message.from_user.id].balance += int(message.text)# for test
+        SponsorData.getUserById(message.from_user.id).balance += int(message.text)# for test
         print("Payment in amount: ", message.text)
         bot.send_message(message.from_user.id, "Payment in amount " + str(message.text))
     else:
