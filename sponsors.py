@@ -20,8 +20,7 @@ class SponsorPoint:
 sponsorsList = {}
 verifiedSponsors = []
 
-global last 
-last = None
+last = {}
 
 def auth(fn):
     def wrapped(message):
@@ -60,24 +59,29 @@ def get_reg_name(message):
         print("Place: ", message.text, " such a place already exists")
         bot.send_message(message.from_user.id, 'You already have a point with that name')
     else:
-        Point = SponsorPoint()
-        Point.name = message.text
-        Profile.sposorsPoints[Point.name] = Point
-        Point.SponsorProfile = Profile
-        last = SponsorPoint
+        last[message.from_user.id] = message.text
         print("Place: ", message.text, " place successfully registered and waiting for sending coordinates")
         bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
         
 
-@bot.message_handler(func=lambda x:False if last is None else True, content_types=['location'])
+@bot.message_handler(content_types=['location'])
 @auth
 def handle_location(message):
     global last
-    last.latitude = message.location.latitude
-    last.longitude = message.location.longitude
-    last = None
-    print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
-    bot.send_message(message.from_user.id, 'Good. I remembered')
+    if(not(message.from_user.id in last) or (last[message.from_user.id] is None)):
+        pass
+    else:
+        Profile = sponsorsList[message.from_user.id]
+        Point = SponsorPoint()
+        Point.name = last[message.from_user.id]
+        Point.latitude = message.location.latitude
+        Point.longitude = message.location.longitude
+        Profile.sposorsPoints[Point.name] = Point
+        Point.SponsorProfile = Profile
+        
+        last[message.from_user.id] = None
+        print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
+        bot.send_message(message.from_user.id, 'Good. I remembered')
 
 @bot.message_handler(commands=['del_place'])
 @auth
