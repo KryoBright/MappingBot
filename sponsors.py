@@ -7,6 +7,7 @@ class SponsorProfile:
     def __init__(self):
         self.userId = -1
         self.name = ""
+        self.about = ""
         self.balance = 0
         self.sposorsPoints = {}
 
@@ -14,6 +15,7 @@ class SponsorPoint:
     def __init__(self):
         self.SponsorProfile = None
         self.name = ""
+        self.about = ""
         self.latitude = 0
         self.longitude = 0
 
@@ -56,14 +58,21 @@ def auth(fn):
 @bot.message_handler(commands=['get_sponsor'])
 def get_sponsor(message):
     bot.send_message(message.from_user.id, "Enter company name:")
-    bot.register_next_step_handler(message, get_reg_sponsor)
+    bot.register_next_step_handler(message, get_sponsor_about)
 
-def get_reg_sponsor(message):
+def get_sponsor_about(message):
+    name = message.text
+    bot.send_message(message.from_user.id, "Enter about company:")
+    bot.register_next_step_handler(message, get_reg_sponsor, name)
+
+def get_reg_sponsor(message, name):
     Profile = SponsorProfile()
     Profile.userId = message.from_user.id
-    Profile.name = message.text
+    Profile.name = name
+    about = message.text
+    Profile.about = about
     SponsorData.addNewUser(Profile)
-    print("Company: ", message.text, " now can use the sponsorship interface")
+    print("Company ", name, " with about", about, " now can use the sponsorship interface")
     bot.send_message(message.from_user.id, 'Ok. I remembered. Now you can use the sponsorship interface')    
     
 
@@ -71,17 +80,23 @@ def get_reg_sponsor(message):
 @auth
 def add_place(message):
     bot.send_message(message.from_user.id, "Enter place name:")
-    bot.register_next_step_handler(message, get_reg_name)
+    bot.register_next_step_handler(message, add_place_about)
+    
+def add_place_about(message):
+    name = message.text
+    bot.send_message(message.from_user.id, "Enter about place:")
+    bot.register_next_step_handler(message, get_reg_name, name)
 
-def get_reg_name(message):
+def get_reg_name(message, name):
     global tempRegistarationData
+    about = message.text
     Profile = SponsorData.getUserById(message.from_user.id)
     if(message.text in Profile.sposorsPoints.keys()):
         print("Place: ", message.text, " such a place already exists")
         bot.send_message(message.from_user.id, 'You already have a point with that name')
     else:
-        tempRegistarationData[message.from_user.id] = message.text
-        print("Place: ", message.text, " place successfully registered and waiting for sending coordinates")
+        tempRegistarationData[message.from_user.id] = (name, about)
+        print("Place ", name, "with about", about, " place successfully registered and waiting for sending coordinates")
         bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
         
 
@@ -94,12 +109,13 @@ def handle_location(message):
     else:
         Profile = SponsorData.getUserById(message.from_user.id)
         Point = SponsorPoint()
-        Point.name = tempRegistarationData[message.from_user.id]
+        data = tempRegistarationData[message.from_user.id]
+        Point.name = data[0]
+        Point.about = data[1]
         Point.latitude = message.location.latitude
         Point.longitude = message.location.longitude
         Profile.sposorsPoints[Point.name] = Point
         Point.SponsorProfile = Profile
-        
         tempRegistarationData[message.from_user.id] = None
         print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
         bot.send_message(message.from_user.id, 'Good. I remembered')
