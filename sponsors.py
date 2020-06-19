@@ -1,5 +1,12 @@
 import telebot
 import random
+from DB.init import session
+from string import Template
+
+def getSponsors():
+	return session.run("MATCH (x:SPONSOR) return (x)")
+s = getSponsors()
+print(s)
 
 bot = telebot.TeleBot("1132979507:AAG92LMX_Wn-a6SrdYcA2pvadQBDvrkJULs")
 
@@ -9,7 +16,7 @@ class SponsorProfile:
         self.name = ""
         self.about = ""
         self.balance = 0
-        self.sposorsPoints = {}
+        self.sponsorsPoints = {}
 
 class SponsorPoint:
     def __init__(self):
@@ -27,6 +34,8 @@ class SponsorData:
         return self.sponsorsList
     
     def addNewSponsor(self, sponsorProfileIn):
+    	query = Template("CREATE (x:SPONSOR {userId:'$userId', name:'$name', about:'$about', balance:'$balance', sposorsPoints:'$sposorsPoints'})")
+		session.run(query.substitute(userId=sponsorProfileIn.userId, name=sponsorProfileIn.name, about=sponsorProfileIn.about, balance=sponsorProfileIn.balance, sposorsPoints=sponsorProfileIn.sposorsPoints))
         self.sponsorsList[sponsorProfileIn.userId] = sponsorProfileIn 
         
     def getSponsorById(self, userId):
