@@ -31,11 +31,37 @@ class SponsorData:
         self.sponsorsList = {}
         
     def getAllSponsors(self):
+        sponsors = []
+        responseSponsors = session.run("MATCH (x:SPONSOR) return x.userId AS userId, x.about AS about, x.name AS name, x.balance AS balance")
+        for item in responseSponsors:
+            sponsor = SponsorProfile()
+            sponsor.userId = item['userId']
+            sponsor.name = item['name']
+            sponsor.about = item['about']
+            sponsor.balance = item['balance']
+
+            points = []
+            query = Template("MATCH (x:SponsorPoint) WHERE x.SponsorProfile='$SponsorProfile' return x.SponsorProfile AS SponsorProfile, x.about AS about, x.name AS name, x.latitude AS latitude, x.longitude as longitude")
+            responsePoints = session.run(query.substitute(SponsorProfile=item['userId']))
+
+            for p in responsePoints:
+                point = SponsorPoint()
+                point.SponsorProfile = p['SponsorProfile']
+                point.name = p['name']
+                point.about = p['about']
+                point.latitude = p['latitude']
+                point.longitude = p['longitude']
+
+                points.append(point)
+
+            sponsor.sponsorsPoints = points
+
+        self.sponsorsList = sponsors 
         return self.sponsorsList
     
     def addNewSponsor(self, sponsorProfileIn):
-    	query = Template("CREATE (x:SPONSOR {userId:'$userId', name:'$name', about:'$about', balance:'$balance', sposorsPoints:'$sposorsPoints'})")
-		session.run(query.substitute(userId=sponsorProfileIn.userId, name=sponsorProfileIn.name, about=sponsorProfileIn.about, balance=sponsorProfileIn.balance, sposorsPoints=sponsorProfileIn.sposorsPoints))
+    	query = Template("CREATE (x:SPONSOR {userId:'$userId', name:'$name', about:'$about', balance:'$balance', sponsorsPoints:'$sponsorsPoints'})")
+		session.run(query.substitute(userId=sponsorProfileIn.userId, name=sponsorProfileIn.name, about=sponsorProfileIn.about, balance=sponsorProfileIn.balance, sponsorsPoints=sponsorProfileIn.sponsorsPoints))
         self.sponsorsList[sponsorProfileIn.userId] = sponsorProfileIn 
         
     def getSponsorById(self, userId):
@@ -57,6 +83,8 @@ class SponsorData:
         return res
     
     def addNewPoint(self, UserId, Point):
+        query = Template("CREATE (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude'})")
+        session.run(query.substitute(SponsorProfile=Point.userId, name=Point.name, about=Point.about, latitude=Point.latitude, longitude=Point.longitude))
         Sponsor = self.getSponsorById(userId)
         Sponsor.sposorsPoints[Point.name] = Point
     
@@ -72,6 +100,8 @@ class SponsorData:
 
     def delPoint(self, userId, pointName):
         if(self.getPointsBySponsorIdAndName(userId, pointName)):
+            query = Template("MATCH (x:SponsorPoint) where x.SponsorProfile='$SponsorProfile' and x.name='$name' DELETE (x)")
+            session.run(query.substitute(SponsorProfile=userId, name=pointName))
             del self.getSponsorById(userId).sposorsPoints[pointName]
             return True
         return False
