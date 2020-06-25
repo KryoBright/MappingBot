@@ -17,3 +17,8 @@ def addStockPoint(latitude, longitude):
 def removeStockPoint(latitude, longitude):
 	query = Template("MATCH (x:StockPoint) WHERE x.latitude='$latitude' AND x.longitude='$longitude' DELETE (x)")
 	session.run(query.substitute(latitude=latitude, longitude=longitude))
+
+
+#addUserRatedPoint(12,41,'good')
+
+#addStockPoint(12,512)
