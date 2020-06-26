@@ -14,4 +14,9 @@ def getRoute(From, To):
 	return steps
 
 
-print(getRoute([9.7998046875,50.72507306341435], [9.85,50.72167742756552]))
+def getRoutePatch(From, To):
+	return f"https://ru.distance.to/{From[0]},{From[1]}/{To[0]},{To[1]}"
+
+
+
+print(getRoutePatch([49.97998046875,50.72507306341435], [48.6,50.72167742756552]))
