@@ -90,7 +90,7 @@ def filterImpotentCoords(coords, midPoint):
 def exactToupleMeans(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint):
 	sponsorСoordinates = calcilateDistansesArrayFromPoint(sponsorСoordinates, sponsorsMidpoint)
 	usersCoordinates = calcilateDistansesArrayFromPoint(usersCoordinates, usersMidpoint)
-	return [toupleMean(filterImpotentCoords(sponsorСoordinates, sponsorsMidpoint)), toupleMean(filterImpotentCoords(usersCoordinates, sponsorsMidpoint))]
+	return [toupleMean(filterImpotentCoords(sponsorСoordinates, sponsorsMidpoint)), toupleMean(filterImpotentCoords(usersCoordinates, usersMidpoint))]
 
 
 def isGoodArea(Midpoint):
@@ -198,6 +198,15 @@ def isGoodForUsers(Midpoint):
 	return Midpoint
 
 
+def calculateMidpointWithWeights(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint):
+	sponsorsWeight = len(sponsorСoordinates) * 2
+	usersWeight = len(usersCoordinates)
+	Midpoint = [
+		((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
+		((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
+	]
+	return Midpoint
+
 def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	sponsorСoordinates = sponsorСoordinatesIntoUsersCoordinates(sponsorСoordinates, usersCoordinates)
 	usersMidpoint = toupleMean(usersCoordinates)
@@ -205,12 +214,8 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 	if len(sponsorСoordinates) > 0:
 		sponsorsMidpoint = toupleMean(sponsorСoordinates)
 		[sponsorsMidpoint, usersMidpoint] = exactToupleMeans(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint)
-		sponsorsWeight = len(sponsorСoordinates) * 2
-		usersWeight = len(usersCoordinates)
-		Midpoint = [
-			((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
-			((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
-		]
+		
+		Midpoint = calculateMidpointWithWeights(sponsorСoordinates, usersCoordinates, sponsorsMidpoint, usersMidpoint)
 	else:
 		Midpoint = [usersMidpoint[0], usersMidpoint[1]]
 
