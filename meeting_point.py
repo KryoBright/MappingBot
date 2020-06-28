@@ -123,4 +123,5 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 sponsor = [[9,10], [9,11], [9,10], [9,10]]
 users = [[9,10], [8,10], [8,11]]
 
+
 print(findMiddlePoint(sponsor, users))
