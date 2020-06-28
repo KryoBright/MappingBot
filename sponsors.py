@@ -137,6 +137,7 @@ def get_reg_sponsor(message, name):
     Profile.about = about
     SponsorData.addNewSponsor(Profile)
     print("Company ", name, " with about", about, " now can use the sponsorship interface")
+
     bot.send_message(message.from_user.id, 'Ok. I remembered. Now you can use the sponsorship interface')    
     
 
@@ -162,6 +163,7 @@ def get_reg_name(message, name):
     tempRegistarationData[message.from_user.id] = (name, about)
     print("Place ", name, "with about", about, " place successfully registered and waiting for sending coordinates")
     bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
+
         
 
 @bot.message_handler(content_types=['location'])
@@ -176,11 +178,13 @@ def handle_location(message):
         data = tempRegistarationData[message.from_user.id]
         Point.name = data[0]
         Point.about = data[1]
+
         Point.latitude = message.location.latitude
         Point.longitude = message.location.longitude
         Profile.sposorsPoints[Point.name] = Point
         Point.SponsorProfile = Profile
         tempRegistarationData[message.from_user.id] = None
+
         print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
         bot.send_message(message.from_user.id, 'Good. I remembered')
 
@@ -224,6 +228,7 @@ def sponsor_help(message):
 @auth
 def cash_balance(message):
     bot.send_message(message.from_user.id, "You have " + str(SponsorData.getSponsorById(message.from_user.id).balance))
+
 
 @bot.message_handler(commands=['put_money'])
 @auth
