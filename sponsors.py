@@ -23,6 +23,7 @@ class SponsorPoint:
 		self.SponsorProfile = None
 		self.name = ""
 		self.about = ""
+        	self.image = None
 		self.latitude = 0
 		self.longitude = 0
 
@@ -49,6 +50,7 @@ class SponsorData:
 				point.SponsorProfile = p['SponsorProfile']
 				point.name = p['name']
 				point.about = p['about']
+                		point.image = p['image']
 				point.latitude = p['latitude']
 				point.longitude = p['longitude']
 
@@ -83,8 +85,8 @@ class SponsorData:
 		return res
 	
 	def addNewPoint(self, UserId, Point):
-		query = Template("CREATE (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude'})")
-		session.run(query.substitute(SponsorProfile=Point.userId, name=Point.name, about=Point.about, latitude=Point.latitude, longitude=Point.longitude))
+		query = Template("CREATE (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude', image:'$image'})")
+		session.run(query.substitute(SponsorProfile=Point.userId, name=Point.name, about=Point.about, latitude=Point.latitude, longitude=Point.longitude, image = Point.image))
 		Sponsor = self.getSponsorById(userId)
 		Sponsor.sposorsPoints[Point.name] = Point
 	
@@ -190,6 +192,40 @@ def handle_location(bot_instance,message):
 			print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
 			bot.send_message(message.from_user.id, 'Good. I remembered')
 
+tempImageData = {}
+@bot.message_handler(commands=['add_photo'])
+@auth
+def handle_docs_photo_name(message):
+    bot.send_message(message.from_user.id, "Enter place name:")
+    bot.register_next_step_handler(message, handle_docs_photo_name2)
+
+def handle_docs_photo_name2(message):
+    global tempImageData
+    name = message.text
+    if(SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)):
+        point = SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)
+        tempImageData[message.from_user.id] = point
+        bot.send_message(message.from_user.id, 'Ok. Now share the photo of the point')
+    else:
+        bot.send_message(message.from_user.id, 'Bad. There is no such place')
+
+@bot.message_handler(content_types=['photo'])
+@auth
+def handle_docs_photo(message):
+    global tempImageData
+    if(not(message.from_user.id in tempImageData) or (tempImageData[message.from_user.id] is None)):
+        pass
+    else:
+        point = tempImageData[message.from_user.id]
+        tempImageData[message.from_user.id] = None
+        try:
+            point.image = message.photo[len(message.photo)-1].file_id
+            bot.reply_to(message, "Photo added successfully") 
+        except Exception as e:
+            print("Error saving image ", e)
+            bot.reply_to(message,"Error, administration already knows")
+
+
 @bot.message_handler(commands=['del_place'])
 @auth
 def del_place(message):
@@ -221,6 +257,7 @@ def sponsor_help(message):
 	/cash_balance - to find out the balance
 	/put_money - to put money into the account
 	/add_place - to add a sponsorship place
+    /add_photo - to add a sponsor point photo
 	/del_place - to remove sponsorship place
 	/get_place_list - to display all sponsorship places
 	If the commands do not work you are not verified.
