@@ -102,6 +102,7 @@ class SponsorData:
 	def getPointsBySponsorIdAndName(self, userId, pointName):
 		if((self.getSponsorById(userId)) and (pointName in self.getSponsorById(userId).sponsorsPoints)):
 			return SponsorData.getSponsorById(userId).sponsorsPoints[pointName]
+
 		return None
 
 	def delPoint(self, userId, pointName):
@@ -174,7 +175,6 @@ def get_reg_name(message, name):
 	print("Place ", name, "with about", about, " place successfully registered and waiting for sending coordinates")
 	bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
 		
-
 
 # @bot.message_handler(content_types=['location'])
 # @authSilent
@@ -270,7 +270,7 @@ def sponsor_help(message):
 	/cash_balance - to find out the balance
 	/put_money - to put money into the account
 	/add_place - to add a sponsorship place
-    /add_photo - to add a sponsor point photo
+  /add_photo - to add a sponsor point photo
 	/del_place - to remove sponsorship place
 	/get_place_list - to display all sponsorship places
 	If the commands do not work you are not verified.

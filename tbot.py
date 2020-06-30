@@ -1,4 +1,4 @@
-﻿import telebot
+import telebot
 import re
 from threading import Timer,Thread,Event
 import hashlib
@@ -394,7 +394,8 @@ def query_handler(call):
 		print("spam")
 		bot.delete_message(call.message.chat.id,call.message.message_id)
 	if (c_data[0]=="j_room_nd"):
-		joinRoom(int(c_data[1]),call.from_user.id,call.from_user.username)
+		joinRoom(int(c_data[1]),int(c_data[2]),c_data[3])
+		bot.delete_message(call.message.chat.id,call.message.message_id)
 
 ##DEPRECATED
 ##Somebody,pls,think about other solution
@@ -414,6 +415,35 @@ def invite(message):
 		button1=telebot.types.InlineKeyboardButton(text="Click here to join",callback_data="j_room_nd "+str(roomId))
 		markup.add(button1)
 		bot.send_message(userId,"Share this message to invite users into this room",reply_markup=markup)
+
+@bot.message_handler(commands=['invite_all'])
+@auth
+def ultima_invite(message):
+	userId=message.from_user.id
+	s_name=message.from_user.username
+	r=list(User.getUserRoom(userId))+[]
+	if (len(r)==0):
+		bot.send_message(userId,"You should be in room to execute this command")
+	else:
+		print(r[0])
+		roomId=r[0]['id']
+		uss=list(User.getAllIds())+[]
+		for i,user_n in enumerate(uss):
+			ind=user_n["id"]
+			print(ind)
+			markup=telebot.types.InlineKeyboardMarkup(row_width=1)
+			button1=telebot.types.InlineKeyboardButton(text="Accept",callback_data="j_room_nd "+str(roomId)+" "+str(ind)+" Guest"+str(i))
+				
+			button2=telebot.types.InlineKeyboardButton(text="Decline",callback_data="declined "+str(userId)+" "+str(user_n))
+				
+			button3=telebot.types.InlineKeyboardButton(text="Mark as spam",callback_data="spam "+str(userId))
+				
+			markup.add(button1)
+			markup.add(button2)
+			markup.add(button3)
+				
+			bot.send_message(int(ind),"User "+s_name+" invites you to join his room",reply_markup=markup)
+
 
 @bot.message_handler(commands=['give_point'])
 def fake_func(message):
@@ -449,6 +479,10 @@ def fake_func(message):
 	
 	Закажи онлайн на https://mama-ya-doma.ru/""")
 	
+@bot.message_handler(content_types=["photo"])
+def tmp(message):
+	image = message.photo[len(message.photo)-1].file_id
+	bot.send_photo(message.from_user.id,image)
 #OK
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
@@ -499,4 +533,5 @@ def all_clean():
 last_clear[0]=0
 t = perpetualTimer(2,main_process)
 t.start()
+
 bot.polling() 
