@@ -1,4 +1,4 @@
-﻿import telebot
+import telebot
 import re
 from threading import Timer,Thread,Event
 import hashlib
