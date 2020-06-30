@@ -99,8 +99,8 @@ def findMiddlePoint(sponsorСoordinates, usersCoordinates):
 		sponsorsWeight = len(sponsorСoordinates) * 2
 		usersWeight = len(usersCoordinates)
 		Midpoint = [
-			((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
-			((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
+		((sponsorsWeight * sponsorsMidpoint[0]) + (usersWeight * usersMidpoint[0])) / (sponsorsWeight + usersWeight), 
+		((sponsorsWeight * sponsorsMidpoint[1]) + (usersWeight * usersMidpoint[1])) / (sponsorsWeight + usersWeight)
 		]
 	else:
 		Midpoint = [usersMidpoint[0], usersMidpoint[1]]
