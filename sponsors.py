@@ -2,6 +2,9 @@ import telebot
 import random
 from DB.init import session
 from string import Template
+from telebot import apihelper
+
+apihelper.ENABLE_MIDDLEWARE = True
 
 def getSponsors():
 	return session.run("MATCH (x:SPONSOR) return (x)")
@@ -23,6 +26,7 @@ class SponsorPoint:
 		self.SponsorProfile = None
 		self.name = ""
 		self.about = ""
+		self.image = None
 		self.latitude = 0
 		self.longitude = 0
 
@@ -41,7 +45,7 @@ class SponsorData:
 			sponsor.balance = item['balance']
 
 			points = []
-			query = Template("MATCH (x:SponsorPoint) WHERE x.SponsorProfile='$SponsorProfile' return x.SponsorProfile AS SponsorProfile, x.about AS about, x.name AS name, x.latitude AS latitude, x.longitude as longitude")
+			query = Template("MATCH (x:SponsorPoint) WHERE x.SponsorProfile='$SponsorProfile' return x.SponsorProfile AS SponsorProfile, x.about AS about, x.name AS name, x.latitude AS latitude, x.longitude as longitude, image as image")
 			responsePoints = session.run(query.substitute(SponsorProfile=item['userId']))
 
 			for p in responsePoints:
@@ -49,6 +53,7 @@ class SponsorData:
 				point.SponsorProfile = p['SponsorProfile']
 				point.name = p['name']
 				point.about = p['about']
+				point.image = p['image']
 				point.latitude = p['latitude']
 				point.longitude = p['longitude']
 
@@ -83,26 +88,28 @@ class SponsorData:
 		return res
 	
 	def addNewPoint(self, UserId, Point):
-		query = Template("CREATE (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude'})")
-		session.run(query.substitute(SponsorProfile=Point.userId, name=Point.name, about=Point.about, latitude=Point.latitude, longitude=Point.longitude))
-		Sponsor = self.getSponsorById(userId)
-		Sponsor.sposorsPoints[Point.name] = Point
+		print(Point)
+		query = Template("CREATE (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude', image:'$image'})")
+		session.run(query.substitute(SponsorProfile=UserId, name=Point.name, about=Point.about, latitude=Point.latitude, longitude=Point.longitude, image = Point.image))
+		Sponsor = self.getSponsorById(UserId)
+		Sponsor.sponsorsPoints[Point.name] = Point
 	
 	def getPointsBySposorId(self, userId):
 		if(self.getSponsorById(userId)):
-			return self.getSponsorById(userId).sposorsPoints
+			return self.getSponsorById(userId).sponsorsPoints
 		return None
 		
 	def getPointsBySponsorIdAndName(self, userId, pointName):
-		if((self.getSponsorById(userId)) and (pointName in self.getSponsorById(userId).sposorsPoints)):
-			return SponsorData.getSponsorById(userId).sposorsPoints[pointName]
+		if((self.getSponsorById(userId)) and (pointName in self.getSponsorById(userId).sponsorsPoints)):
+			return SponsorData.getSponsorById(userId).sponsorsPoints[pointName]
+
 		return None
 
 	def delPoint(self, userId, pointName):
 		if(self.getPointsBySponsorIdAndName(userId, pointName)):
 			query = Template("MATCH (x:SponsorPoint) where x.SponsorProfile='$SponsorProfile' and x.name='$name' DELETE (x)")
 			session.run(query.substitute(SponsorProfile=userId, name=pointName))
-			del self.getSponsorById(userId).sposorsPoints[pointName]
+			del self.getSponsorById(userId).sponsorsPoints[pointName]
 			return True
 		return False
 	
@@ -169,11 +176,15 @@ def get_reg_name(message, name):
 	bot.send_message(message.from_user.id, 'Ok. I remembered. Now share the location of the point')
 		
 
+# @bot.message_handler(content_types=['location'])
+# @authSilent
 @bot.middleware_handler(update_types=['message'])
-@authSilent
-def handle_location(bot_instance,message):
-	if "location" in message:
-		global tempRegistarationData
+def modify_message(bot_instance, message):
+# def handle_location(message):	
+	if message.location != None:
+		# global tempRegistarationData
+		print(123456)
+		print(tempRegistarationData)
 		if(not(message.from_user.id in tempRegistarationData) or (tempRegistarationData[message.from_user.id] is None)):
 			pass
 		else:
@@ -184,11 +195,49 @@ def handle_location(bot_instance,message):
 			Point.about = data[1]
 			Point.latitude = message.location.latitude
 			Point.longitude = message.location.longitude
-			Profile.sposorsPoints[Point.name] = Point
+			Profile.sponsorsPoints[Point.name] = Point
 			Point.SponsorProfile = Profile
+			SponsorData.addNewPoint(message.from_user.id, Point)
 			tempRegistarationData[message.from_user.id] = None
 			print("Coordinates received: Latitude: ", message.location.latitude, " Longitude: ", message.location.longitude)
 			bot.send_message(message.from_user.id, 'Good. I remembered')
+
+tempImageData = {}
+@bot.message_handler(commands=['add_photo'])
+@auth
+def handle_docs_photo_name(message):
+    bot.send_message(message.from_user.id, "Enter place name:")
+    bot.register_next_step_handler(message, handle_docs_photo_name2)
+
+def handle_docs_photo_name2(message):
+    global tempImageData
+    name = message.text
+    if(SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)):
+        point = SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)
+        tempImageData[message.from_user.id] = point
+        bot.send_message(message.from_user.id, 'Ok. Now share the photo of the point')
+    else:
+        bot.send_message(message.from_user.id, 'Bad. There is no such place')
+
+@bot.message_handler(content_types=['photo'])
+@auth
+def handle_docs_photo(message):
+    global tempImageData
+    if(not(message.from_user.id in tempImageData) or (tempImageData[message.from_user.id] is None)):
+        pass
+    else:
+        point = tempImageData[message.from_user.id]
+        tempImageData[message.from_user.id] = None
+        try:
+            point.image = message.photo[len(message.photo)-1].file_id
+            # print(point.image)
+            query = Template("MATCH (x:SponsorPoint {SponsorProfile:'$SponsorProfile', name:'$name', about:'$about', latitude:'$latitude', longitude:'$longitude'}) set x.image='$image'")
+            session.run(query.substitute(SponsorProfile=message.from_user.id, name=point.name, about=point.about, latitude=point.latitude, longitude=point.longitude, image = point.image))
+            bot.reply_to(message, "Photo added successfully") 
+        except Exception as e:
+            print("Error saving image ", e)
+            bot.reply_to(message,"Error, administration already knows")
+
 
 @bot.message_handler(commands=['del_place'])
 @auth
@@ -221,6 +270,7 @@ def sponsor_help(message):
 	/cash_balance - to find out the balance
 	/put_money - to put money into the account
 	/add_place - to add a sponsorship place
+  /add_photo - to add a sponsor point photo
 	/del_place - to remove sponsorship place
 	/get_place_list - to display all sponsorship places
 	If the commands do not work you are not verified.

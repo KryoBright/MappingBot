@@ -233,7 +233,7 @@ def getUsernameByUser(id):
 	
 def getMaxId():
 	return session.run('MATCH (a) RETURN max(toInteger(a.id)) AS id ')
-	
+
 def getAllIds():
 	return session.run('MATCH (a:USER) RETURN a.telegrammUserId AS id ')
 	

@@ -1,4 +1,4 @@
-﻿import telebot
+import telebot
 import re
 from threading import Timer,Thread,Event
 import hashlib
@@ -533,4 +533,5 @@ def all_clean():
 last_clear[0]=0
 t = perpetualTimer(2,main_process)
 t.start()
+
 bot.polling() 
