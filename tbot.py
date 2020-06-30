@@ -263,6 +263,9 @@ def update_loc(user_tg_id,meetpoint):
 		User.CoordinateMessagePropUpdate(pure_id, "long", loc[1])
 		print(User.addUserMessageRelationship(user_tg_id,pure_id, "from_Bot"))
 		print(f'Resend location for user with id {user_tg_id}')
+		point=getPointData()
+		bot.send_photo(user_tg_id,point["image"])
+		bot.send_message(user_tg_id,point["info"])
 
 #OK.Arranges meetings.Needs counter command and logging
 @bot.message_handler(commands=['meeting'])
@@ -288,6 +291,10 @@ def meeting_process(message):
 				print(uids['id'])
 				bot.send_message(uids['id'],"Please, share LiveLocation if you want to be included to room meeting point calculations. Do not delete any messages send by you or bot from this point!")
 	
+
+@bot.message_handler(commands=['resend_map'])
+def resend(message):
+	User.deleteMap(message.from_user.id)
 #OK
 @bot.message_handler(commands=['help'])
 def send_help(message):
@@ -500,7 +507,10 @@ def echo_all(message):
 	else:
 		bot.reply_to(message, message.text)
 	
-
+def getPointData():
+	q=list(User.getAllSponsorPoints())+[]
+	return q[0]
+	
 #Overall OK.Needs check for optimization
 def main_process():
 	upd_locations()

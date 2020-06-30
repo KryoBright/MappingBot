@@ -237,6 +237,13 @@ def getMaxId():
 def getAllIds():
 	return session.run('MATCH (a:USER) RETURN a.telegrammUserId AS id ')
 	
+def getAllSponsorPoints():
+	return session.run('MATCH (a:SponsorPoint) RETURN a.about AS info,a.image AS image ')
+	
+def deleteMap(id):
+	query = Template('MATCH (a:USER{telegrammUserId:"$id"})-[r:from_Bot]-(b) DELETE r,b')
+	return session.run(query.substitute(id=id))
+	
 points = getMeetingPoints()
 for p in points:
 	print(p)
