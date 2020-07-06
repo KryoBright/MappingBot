@@ -1,4 +1,5 @@
 import requests 
+import math
 
 def getRoute(From, To):
 	# alternatives=true - параметр для получения нескольких возможных путей
@@ -11,12 +12,20 @@ def getRoute(From, To):
 		step = data['routes'][0]['legs'][0]['steps'][i]['maneuver']['location']
 		steps.append(step)
 
-	return steps
+
+	status = 200 # нужно еще идти до точки
+
+	if(math.sqrt((From[0] - To[0]) ** 2 + (From[1] - To[1]) ** 2) < 0.0001):
+		status = 400 # точку встерчи отображать не нужно
+
+	return [status, steps]
 
 
-def getRoutePatch(From, To):
-	return f"https://ru.distance.to/{From[0]},{From[1]}/{To[0]},{To[1]}"
 
 
+def getRouteOCM(From, To):
+	return f"https://routing.openstreetmap.de/?loc={From[0]}%2C{From[1]}&loc={To[0]}%2C{To[1]}&hl=ru&alt=0&srv=1"
 
-print(getRoutePatch([49.97998046875,50.72507306341435], [48.6,50.72167742756552]))
+
+# print(getRoute([9.7998046875,50.72507306341435], [19.85,50.72167742756552]))
+# print(getRouteOCM([9.7998046875,50.72507306341435], [19.85,50.72167742756552]))
