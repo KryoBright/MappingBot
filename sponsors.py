@@ -150,7 +150,7 @@ tempImageData = {}
 @auth
 def add_photo_name(message):
     bot.send_message(message.from_user.id, "Enter place name:")
-    bot.register_next_step_handler(message, handle_docs_photo_name2)
+    bot.register_next_step_handler(message, add_photo_file)
 
 def add_photo_file(message):
     global tempImageData
@@ -177,6 +177,24 @@ def handle_docs_photo(message):
         except Exception as e:
             print("Error saving image ", e)
             bot.reply_to(message,"Error, administration already knows")
+
+@bot.message_handler(commands=['del_photo'])
+@auth
+def del_photo_name(message):
+    bot.send_message(message.from_user.id, "Enter place name:")
+    bot.register_next_step_handler(message, del_photo_name)
+
+def del_photo_file(message):
+    name = message.text
+    if(SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)):
+        point = SponsorData.getPointsBySponsorIdAndName(message.from_user.id, name)
+        if(point.image):
+            point.image = None
+            bot.send_message(message.from_user.id, 'Ok. Photo deleted')
+        else:
+            bot.send_message(message.from_user.id, 'Bad. Place has no photo')
+    else:
+        bot.send_message(message.from_user.id, 'Bad. There is no such place')
 
 @bot.message_handler(commands=['del_place'])
 @auth
@@ -211,6 +229,7 @@ def sponsor_help(message):
     /add_place - to add a sponsorship place
     /add_photo - to add point photo
     /del_place - to remove sponsorship place
+    /del_photo - to remove sponsor point photo
     /get_place_list - to display all sponsorship places
     /send_message - write to administrator
     If the commands do not work you are not verified.
